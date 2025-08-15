@@ -2,6 +2,12 @@
 
 A high-performance, enterprise-ready API Gateway built in Go that serves as the entry point for microservices, implementing authentication, rate limiting, request routing, and comprehensive observability.
 
+## 🏗️ Architecture Overview
+
+![API Gateway Architecture](docs/architecture.png)
+
+*Complete system architecture showing the API Gateway with distributed event processing, designed to handle 100,000+ concurrent users with comprehensive monitoring, security, and scalability features.*
+
 ## Features
 
 ### Core Functionality
