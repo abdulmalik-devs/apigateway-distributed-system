@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+  namespace: api-gateway
+  labels:
+    app.kubernetes.io/name: api-gateway
+    app.kubernetes.io/component: config
+data:
+  config.yaml: |
+    server:
+      port: 8080
+      host: "0.0.0.0"
+      read_timeout: "30s"
+      write_timeout: "30s"
+      idle_timeout: "60s"
+      tls:
+        enabled: false
+      cors:
+        enabled: true
+        allowed_origins: ["*"]
+        allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+        allowed_headers: ["*"]
+
+    auth:
+      jwt:
+        secret: "k8s-jwt-secret-change-this-in-production"
+        expiration_time: "1h"
+        refresh_time: "24h"
+        issuer: "api-gateway"
+        audience: "api-gateway-users"
+        algorithm: "HS256"
+      api_key:
+        enabled: true
+        header: "X-API-Key"
+
+    rate_limit:
+      enabled: true
+      algorithm: "distributed"
+      default:
+        requests: 100
+        window: "1m"
+        burst: 20
+
+    routing:
+      services:
+        user_service:
+          urls:
+            - "http://user-service.api-gateway.svc.cluster.local:8080"
+          load_balancer: "round_robin"
+          timeout: "30s"
+          retries: 3
+          circuit_breaker:
+            enabled: true
+            failure_threshold: 5
+            recovery_timeout: "30s"
+            half_open_requests: 3
+        
+        order_service:
+          urls:
+            - "http://order-service.api-gateway.svc.cluster.local:8080"
+          load_balancer: "round_robin"
+          timeout: "45s"
+          retries: 2
+          circuit_breaker:
+            enabled: true
+            failure_threshold: 3
+            recovery_timeout: "60s"
+            half_open_requests: 5
+
+    cache:
+      enabled: true
+      ttl: "5m"
+      max_size: 1000
+
+    redis:
+      host: "redis-service.api-gateway.svc.cluster.local"
+      port: 6379
+      password: ""
+      db: 0
+      pool_size: 10
+
+    database:
+      host: "postgres-service.api-gateway.svc.cluster.local"
+      port: 5432
+      user: "gateway_user"
+      password: "gateway_password"
+      dbname: "gateway_db"
+      sslmode: "disable"
+
+    monitoring:
+      prometheus:
+        enabled: true
+        path: "/metrics"
+        port: 9090
+      tracing:
+        enabled: true
+        jaeger: "http://jaeger-service.api-gateway.svc.cluster.local:14268/api/traces"
+
+    logging:
+      level: "info"
+      format: "json"
+      output: "stdout"
+

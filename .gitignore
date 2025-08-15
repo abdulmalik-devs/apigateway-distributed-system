@@ -1,0 +1,129 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Build artifacts
+bin/
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+
+# Configuration files with secrets
+configs/*.local.yaml
+configs/*.prod.yaml
+*.key
+*.pem
+*.crt
+
+# Docker
+.dockerignore
+
+# Kubernetes
+*.kubeconfig
+
+# Temporary files
+tmp/
+temp/
+
+# Coverage reports
+coverage.txt
+coverage.html
+
+# Profiling data
+*.prof
+
+# Air live reload
+tmp/
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Database files
+*.db
+*.sqlite
+
+# Redis dump files
+dump.rdb
+
+# Kafka data
+kafka-data/
+
+# Prometheus data
+prometheus-data/
+
+# Grafana data
+grafana-data/
+
+# Jaeger data
+jaeger-data/
+
+# PostgreSQL data
+postgres-data/
+
+# Node modules (if any frontend components)
+node_modules/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Helm
+charts/*.tgz
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files
+*.tar.gz
+*.zip
+*.rar
+
+# Local development files
+local/
+dev/

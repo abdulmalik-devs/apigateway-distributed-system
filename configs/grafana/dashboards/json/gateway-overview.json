@@ -1,0 +1,52 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "HTTP Requests/s",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0},
+      "targets": [
+        {"expr": "rate(gateway_http_requests_total[1m])", "refId": "A"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Latency (p50/p95)",
+      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 0},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum(rate(gateway_http_request_duration_seconds_bucket[5m])) by (le))", "refId": "A"},
+        {"expr": "histogram_quantile(0.95, sum(rate(gateway_http_request_duration_seconds_bucket[5m])) by (le))", "refId": "B"}
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Error Rate (%)",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 6},
+      "targets": [
+        {"expr": "100 * (sum(rate(gateway_http_requests_total{status_code=~\"5..|4..\"}[5m])) / sum(rate(gateway_http_requests_total[5m])))", "refId": "A"}
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Upstream Latency",
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
+      "targets": [
+        {"expr": "sum(rate(gateway_upstream_request_duration_seconds_sum[5m])) / sum(rate(gateway_upstream_request_duration_seconds_count[5m]))", "refId": "A"}
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["gateway"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "",
+  "title": "API Gateway Overview",
+  "version": 1
+}

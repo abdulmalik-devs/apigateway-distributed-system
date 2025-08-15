@@ -1,0 +1,136 @@
+# API Gateway Configuration
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "60s"
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+  cors:
+    enabled: true
+    allowed_origins: ["*"]
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    allowed_headers: ["*"]
+
+auth:
+  jwt:
+    secret: "your-super-secret-jwt-key-change-this-in-production"
+    expiration_time: "1h"
+    refresh_time: "24h"
+    issuer: "api-gateway"
+    audience: "api-gateway-users"
+    algorithm: "HS256"
+  api_key:
+    enabled: true
+    header: "X-API-Key"
+
+rate_limit:
+  enabled: true
+  algorithm: "token_bucket"  # token_bucket, sliding_window, fixed_window, distributed
+  default:
+    requests: 100
+    window: "1m"
+    burst: 20
+  per_user:
+    premium_user:
+      requests: 1000
+      window: "1m"
+      burst: 50
+    basic_user:
+      requests: 100
+      window: "1m"
+      burst: 10
+  per_service:
+    user_service:
+      requests: 500
+      window: "1m"
+      burst: 25
+
+routing:
+  services:
+    user_service:
+      urls:
+        - "http://user-service:8001"
+        - "http://user-service-backup:8001"
+      load_balancer: "round_robin"  # round_robin, weighted_round_robin, least_connections, random
+      timeout: "30s"
+      retries: 3
+      circuit_breaker:
+        enabled: true
+        failure_threshold: 5
+        recovery_timeout: "30s"
+        half_open_requests: 3
+    
+    order_service:
+      urls:
+        - "http://order-service:8002"
+      load_balancer: "round_robin"
+      timeout: "45s"
+      retries: 2
+      circuit_breaker:
+        enabled: true
+        failure_threshold: 3
+        recovery_timeout: "60s"
+        half_open_requests: 5
+    
+    payment_service:
+      urls:
+        - "http://payment-service:8003"
+      load_balancer: "least_connections"
+      timeout: "20s"
+      retries: 3
+      circuit_breaker:
+        enabled: true
+        failure_threshold: 2
+        recovery_timeout: "120s"
+        half_open_requests: 2
+  
+  default:
+    urls: []
+    load_balancer: "round_robin"
+    timeout: "30s"
+    retries: 3
+    circuit_breaker:
+      enabled: false
+      failure_threshold: 5
+      recovery_timeout: "30s"
+      half_open_requests: 3
+
+cache:
+  enabled: true
+  ttl: "5m"
+  max_size: 1000
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "gateway_user"
+  password: "gateway_password"
+  dbname: "gateway_db"
+  sslmode: "disable"
+
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 10
+
+monitoring:
+  prometheus:
+    enabled: true
+    path: "/metrics"
+    port: 9090
+  tracing:
+    enabled: false
+    jaeger: "http://jaeger:14268/api/traces"
+
+logging:
+  level: "info"  # debug, info, warn, error
+  format: "json"  # json, text
+  output: "stdout"  # stdout, stderr, file
+

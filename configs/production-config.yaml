@@ -1,0 +1,179 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "60s"
+  tls:
+    enabled: true
+    cert_file: "/etc/ssl/certs/api-gateway.crt"
+    key_file: "/etc/ssl/private/api-gateway.key"
+    min_version: "1.2"
+    cipher_suites:
+      - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+  cors:
+    enabled: true
+    allowed_origins:
+      - "https://yourdomain.com"
+      - "https://app.yourdomain.com"
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    allowed_headers: ["Authorization", "Content-Type", "X-API-Key", "X-Request-ID"]
+    max_age: 86400
+
+auth:
+  jwt:
+    secret: "your-production-jwt-secret-change-this"
+    expiration_time: "1h"
+    refresh_time: "24h"
+    issuer: "api-gateway"
+    audience: "api-gateway-users"
+    algorithm: "HS256"
+  api_key:
+    enabled: true
+    header: "X-API-Key"
+
+rate_limit:
+  enabled: true
+  algorithm: "distributed"
+  default:
+    requests: 1000  # Increased for production
+    window: "1m"
+    burst: 200
+  per_user:
+    premium:
+      requests: 5000
+      window: "1m"
+      burst: 500
+    enterprise:
+      requests: 10000
+      window: "1m"
+      burst: 1000
+  per_service:
+    user_service:
+      requests: 5000
+      window: "1m"
+      burst: 500
+    payment_service:
+      requests: 2000
+      window: "1m"
+      burst: 200
+  ddos_protection:
+    enabled: true
+    max_requests_per_ip: 1000
+    window: "1m"
+    block_duration: "10m"
+
+routing:
+  services:
+    user_service:
+      urls:
+        - "http://user-service.your-namespace.svc.cluster.local:8080"
+        - "http://user-service-backup.your-namespace.svc.cluster.local:8080"
+      load_balancer: "round_robin"
+      timeout: "30s"
+      retries: 3
+      circuit_breaker:
+        enabled: true
+        failure_threshold: 5
+        recovery_timeout: "30s"
+        half_open_requests: 3
+    
+    order_service:
+      urls:
+        - "http://order-service.your-namespace.svc.cluster.local:8080"
+      load_balancer: "least_connections"
+      timeout: "45s"
+      retries: 2
+      circuit_breaker:
+        enabled: true
+        failure_threshold: 3
+        recovery_timeout: "60s"
+        half_open_requests: 5
+    
+    payment_service:
+      urls:
+        - "http://payment-service.your-namespace.svc.cluster.local:8080"
+      load_balancer: "weighted_round_robin"
+      timeout: "20s"
+      retries: 3
+      circuit_breaker:
+        enabled: true
+        failure_threshold: 2
+        recovery_timeout: "120s"
+        half_open_requests: 2
+  
+  default:
+    urls: []
+    load_balancer: "round_robin"
+    timeout: "30s"
+    retries: 3
+    circuit_breaker:
+      enabled: false
+      failure_threshold: 5
+      recovery_timeout: "30s"
+      half_open_requests: 3
+
+cache:
+  enabled: true
+  ttl: "5m"
+  max_size: 10000  # Increased for production
+
+database:
+  host: "postgres-service.your-namespace.svc.cluster.local"
+  port: 5432
+  user: "gateway_user"
+  password: "your-production-password"
+  dbname: "gateway_db"
+  sslmode: "require"
+
+redis:
+  host: "redis-cluster.your-namespace.svc.cluster.local"
+  port: 6379
+  password: "your-redis-password"
+  db: 0
+  pool_size: 50  # Increased for production
+
+monitoring:
+  prometheus:
+    enabled: true
+    path: "/metrics"
+    port: 9090
+  tracing:
+    enabled: true
+    jaeger: "http://jaeger-collector.your-namespace.svc.cluster.local:14268/api/traces"
+
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+
+event_processing:
+  enabled: true
+  provider: "kafka"  # or "rabbitmq"
+  kafka:
+    brokers:
+      - "kafka-0.kafka-headless.your-namespace.svc.cluster.local:9092"
+      - "kafka-1.kafka-headless.your-namespace.svc.cluster.local:9092"
+      - "kafka-2.kafka-headless.your-namespace.svc.cluster.local:9092"
+    topics:
+      api_events: "api-gateway-events"
+      user_events: "user-events"
+      audit_logs: "audit-logs"
+      metrics: "metrics-stream"
+    consumer_group: "api-gateway-consumer"
+    producer_config:
+      acks: "all"
+      compression: "snappy"
+      batch_size: 16384
+      linger_ms: 5
+  rabbitmq:
+    url: "amqp://user:password@rabbitmq.your-namespace.svc.cluster.local:5672/"
+    exchanges:
+      api_events: "topic"
+      user_events: "topic"
+      audit_logs: "direct"
+    queues:
+      audit_logs: "audit-logs"
+      metrics: "metrics-queue"
+      alerts: "alerts-queue"

@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  gateway:
+    build: .
+    ports:
+      - "8081:8080"
+      - "9092:9090"
+    environment:
+      - CONFIG_PATH=/app/configs/config.yaml
+    volumes:
+      - ./configs:/app/configs
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  # Redis for caching and rate limiting
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - gateway-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # PostgreSQL for configuration and analytics
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=gateway_db
+      - POSTGRES_USER=gateway_user
+      - POSTGRES_PASSWORD=gateway_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  # Grafana for metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./configs/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./configs/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./configs/grafana/dashboards/json:/etc/grafana/provisioning/dashboards/json
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16687:16686"  # UI remapped to avoid conflicts
+      - "14269:14268"  # Collector remapped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  # Example microservices for testing
+  user-service:
+    image: nginx:alpine
+    ports:
+      - "8001:80"
+    volumes:
+      - ./examples/user-service:/usr/share/nginx/html
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  order-service:
+    image: nginx:alpine
+    ports:
+      - "8002:80"
+    volumes:
+      - ./examples/order-service:/usr/share/nginx/html
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  payment-service:
+    image: nginx:alpine
+    ports:
+      - "8003:80"
+    volumes:
+      - ./examples/payment-service:/usr/share/nginx/html
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+networks:
+  gateway-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
