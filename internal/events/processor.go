@@ -332,7 +332,11 @@ func (ep *EventProcessor) StartConsumer(ctx context.Context, handler func(*APIEv
 // startKafkaConsumer starts consuming from Kafka
 func (ep *EventProcessor) startKafkaConsumer(ctx context.Context, handler func(*APIEvent) error) error {
 	// Create consumer group
-	group, err := sarama.NewConsumerGroupFromString(ep.config.Kafka.Brokers, ep.config.Kafka.ConsumerGroup, nil)
+	config := sarama.NewConfig()
+	config.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+	
+	group, err := sarama.NewConsumerGroup(ep.config.Kafka.Brokers, ep.config.Kafka.ConsumerGroup, config)
 	if err != nil {
 		return fmt.Errorf("failed to create consumer group: %w", err)
 	}
